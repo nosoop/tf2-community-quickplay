@@ -1,0 +1,61 @@
+Community Quickplay Service
+---------------------------
+
+## Server Table Layout
+
+`servers`:
+* Contains serverid (row ID), IP address, port, and gs_steamid or -1, last master update time
+* When selecting servers, if multiple entries exist with the same IP:port combo, get most recent
+  * We get the most up-to-date IP:port combo for the server
+* For upserts, update where gs_steamid matches, if gs_steamid -1 then upsert anonymous entry for
+  that IP:port
+  * handles cases e.g., a gs_steamid is orphaned (if the IP:port is now owned by a different
+    gs_steamid or is now anonymous), that gs_steamid still owns that row; new IP:port owner gets
+	a different row
+
+`server_info`:
+* Contains serverid, pickled output?, plus last update time
+
+`community_tags` (future addition):
+* Contains accountid, gs_steamid, tag
+* Rows inserted when player suggests a tag
+* Only registered servers can have community tags, because we can't keep track of anonymous
+  servers
+
+`community_ratings` (possible future addition):
+* Contains accountid (for user), gs_steamid, rating (like = 1 / dislike = 0 / removed = NULL)
+* Only registered servers can have ratings for the same reason listed above
+* Rating indicates "would play on" a-la rotten tomatoes
+
+`community_info` (future addition?):
+* Contains gs_steamid, key, value
+* Holds data like steam group link, hostname?
+
+`query_failures` (future addition?):
+* Contains time, ipaddr, port
+* Might need frequent vaccuming
+
+
+## Master Server List Query
+
+* We only update the `servers` table for a specific entry if it passes our filters
+  (i.e., we don't store non-viable servers)
+* Master query is scheduled to run every 3 hours?  It's Python so I can just slap that into
+  crontab
+
+
+## Queries
+
+* Users can only DB-query servers based on serverid (so they can't query against servers not in
+  our list)
+* Servers can only be queried if the last master update was within the last day? (so they can't
+  make us query servers that don't exist anymore)
+  * Add blacklisting functionality to disable server queries if a number of failures (5?) are
+    reached since last master update
+  * A failure occurs if ip/address does not respond (socket.error)
+* Queries here only write to `server_info`
+* Queries are cached for a small amount of time (2~5 minutes), do not use A2S if not stale
+* No response is sent if a given server is disqualified because of a rules change, but info is
+  cached and server is considered disqualified until cache is stale
+* ~~A public server query GET request may be available~~ will require steam login and would need
+  heavier restrictions (if ipaddr doesn't exist in master then failed queries on any port count)

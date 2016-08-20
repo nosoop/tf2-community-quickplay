@@ -1,0 +1,48 @@
+{
+	"socket": "/tmp/quickplay.sock",
+	
+	"databases": {
+		"geoip2": "../db/GeoLite2-City.mmdb"
+	},
+	
+	"filters": {
+		"allowed_map_prefixes": [
+			"arena_", "cp_", "ctf_", "koth_", "pass_", "pd_", "pl_", "plr_", "rd_", "sd_",
+			"tc_",
+			
+			"2tpl_"
+		],
+	    "map_prefixes": [ "trade_", "achievement_", "surf_", "mvm_", "dr_", "vsh_",
+			"mge_", "jump_", "tfdb_", "cp_orange_", "ph_", "zf_", "balloon_race", "ba_", "fw_",
+			"sb_", "psf_", "mario_kart", "dm_", "sk_", "eim_", "bh_", "zm_", "zom_", "tr_",
+			"trimp_", "beta_", "duel_", "jail_",
+			
+			"sniperz_ridge", "tf2ware"
+		],
+		"tags": [
+			"mvm", "surf", "trade", "idle", "norespawntime", "friendlyfire", "highlander",
+			"rtd", "x10", "randomizer", "jailbreak", "respawntimes", "stt", "th",
+			"tf2randomizer", "instantrespawn", "!rtd", "ph", "prophunt", "freak", "hale",
+			"fortwars", "fort_wars", "fw", "cw2", "ctf2w",
+			
+			"nighteam",
+			"noquickplay"
+		],
+		"gamedesc": [
+			"prophunt", "freak fortress", "tf2x10", "vs saxton", "vs. saxton", "jailbreak",
+			"randomizer", "zombie"
+		],
+		"convars": [
+			"ff2_version", "sm_rtd_version", "sm_zf_version",
+			"soap_opendoors", "sm_respawn_time_enabled", "sm_classwarfare_version",
+			"sm_tf2_instantrespawn", "sm_mgemod_version", "sm_tf2hidden_version",
+			"sm_customweaponstf_version", "tf2items_rnd_enabled", "sm_respawn_version"
+		],
+		"hosts": [
+			"FACEIT.com", "THE M GARDEN - USA [ZOMBIES]"
+		]
+	},
+	"passthrough": {
+		"tags": [ "alltalk", "nocrits", "bots", "replays", "stats" ]
+	}
+}

@@ -1,0 +1,737 @@
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Community Quickplay</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+	
+	<link rel="stylesheet" href="css/pure-min.css"></link>
+	<link rel="stylesheet" href="css/modal.css"></link>
+	<link rel="stylesheet" href="css/jquery.contextMenu.min.css"></link>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"></link>
+	
+	<!--[if lte IE 8]>
+		<link rel="stylesheet" href="css/grids-responsive-old-ie-min.css">
+	<![endif]-->
+	<!--[if gt IE 8]><!-->
+		<link rel="stylesheet" href="css/grids-responsive-min.css">
+	<!--<![endif]-->
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+	
+	<style>
+	@font-face {
+		font-family: 'tf2build';
+		src: url(css/fonts/tf2build.ttf);
+	}
+	
+	body {
+		background-color: #221F1C;
+		padding: 0.5em;
+	}
+	
+	#connecting-modal {
+		background-color: #433E37;
+		border-radius: 4px;
+		color: #CABEA4;
+		padding: 0.5em;
+	}
+	
+	#connecting-modal > .modal-header {
+		font-family: 'tf2build';
+		font-size: 2em;
+		border-bottom: none;
+	}
+	
+	#filter-toolbox {
+		/* only FF does position:sticky well, the polyfills are ass */
+		position: sticky;
+		top: 0;
+		z-index: 5;
+		
+		border-bottom: solid 0.4em;
+		border-bottom-color: #221F1C;
+		
+		margin-bottom: 0;
+	}
+	
+	.info-container, .server-container {
+		background-color: #433E37;
+		margin: 0.2em;
+		color: #CABEA4;
+		border-radius: 4px;
+	}
+	
+	.server-container {
+		-moz-user-select: -moz-none;
+		-khtml-user-select: none;
+		-webkit-user-select: none;
+
+		/*
+		 Introduced in IE 10.
+		 See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+		*/
+		-ms-user-select: none;
+		user-select: none;
+		
+		cursor: pointer;
+	}
+	
+	.l-box {
+		padding: 0.5em;
+	}
+	
+	.server-name, .server-map, .server-location {
+		text-overflow: ellipsis;
+		
+		white-space: nowrap;
+		overflow: hidden;
+	}
+	
+	.server-tags {
+		letter-spacing: 0.5em;
+	}
+	
+	#title {
+		font-family: 'tf2build';
+		font-size: 2em;
+		margin-bottom: 0.5em;
+	}
+	
+	.tf-button, #filter-mode-button {
+		background-color: #CABEA4;
+		color: #221F1C;
+		margin: 2px;
+	}
+	.tf-button:hover {
+		background-color: #924738;
+	}
+	.tf-button.off {
+		background-color: #221F1C;
+	}
+	
+	.filter-nah {
+		color: #924738;
+	}
+	.filter-yeah {
+		color: #4B6B1C;
+	}
+	
+	.play-button {
+		background-color: #4B6B1C;
+		color: #C8BBA2;
+		margin: 2px;
+	}
+	
+	.server-map.cozy {
+		font-family: 'tf2build';
+		font-size: 2em;
+	}
+	
+	footer {
+		margin: 0.2em;
+		color: #CABEA4;
+		background-color: #433E37;
+		border-radius: 4px;
+		text-align: center;
+		font-size: 0.6em;
+		padding: 0.3em;
+	}
+	
+	a:link, a:visited {
+		color: inherit;
+	}
+	
+	#filter-count {
+		margin-top: 0.5em;
+	}
+	
+	html {
+		overflow-y: scroll;
+	}
+	
+	.context-menu-list {
+		background: #221F1C;
+		border-color: #403C33;
+	}
+	
+	.context-menu-item {
+		background-color: #221F1C;
+		color: #FFFFFF;
+	}
+	
+	.context-menu-item.context-menu-hover {
+		background-color: #9D511B;
+		color: #000;
+	}
+	
+	.pure-form input[type="text"], .pure-form select {
+		background-color: #221F1C;
+		box-shadow: none;
+	}
+	
+	.pure-form input[type="text"]:focus, .pure-form select:focus {
+		border-color: #CABEA4;
+	}
+	</style>
+</head>
+
+<body>
+	<div class="pure-g">
+		<div class="pure-u-1">
+			<div class="l-box info-container">
+				<div id="title">Team Fortress 2 Community Quickplay (Beta)</div>
+				<p>
+					Listed below are community servers that run relatively vanilla
+					configurations (that is, places where you can play TF2 like a normal pub,
+					with autobalance and everything).  Standard Quickplay rules apply &mdash;
+					no friendly fire, <del>no class limits</del>, no fun allowed
+					(custom game modes).
+				</p>
+				<p>
+					Known notable features are identified with icons.
+					Hover over any icon to find out more.
+					The lack of an icon does not indicate that the server does not have the
+					feature; it may be running that feature in a way that we can't detect yet.
+				</p>
+				
+				<p>
+					Click the buttons below to toggle visibility of servers with the indicated
+					feature.  Features can be marked as "required", "disabled", or "don't care".
+					
+					The left-most icon resets all the filters.
+					To connect to a server, double-click on the entry.
+					For more options, right-click on the entry.
+				</p>
+				
+				<p>
+					(n.b. The site requests location info to figure out what servers may be
+					close to you based on GeoIP data.  May or may not be accurate.
+					If you refuse to provide location data, the server location will be shown
+					directly in place of the guestimated latency.
+					The site doesn't upload it to my server &mdash; I really don't care where
+					you live.)
+				</p>
+			</div>
+		</div>
+	</div>
+	
+	<div class="l-box info-container" id="filter-toolbox">
+		<!-- This has a sticky header on Firefox.  Sadly, polyfills don't work all that well. -->
+		<form class="pure-form" id="filter-toolbar">
+			<span id="tag-toggles"></span>
+			<input type="text" id="map-filter" placeholder="Map name">
+			<select id="region-filter">
+				<option value="">Any region</option>
+				<option value="AF">Africa</option>
+				<option value="AN">Antarctica</option>
+				<option value="AS">Asia</option>
+				<option value="EU">Europe</option>
+				<option value="NA">North America</option>
+				<option value="OC">Oceania</option>
+				<option value="SA">South America</option>
+			</select>
+		</form>
+		<div id="filter-count">All servers displayed.</div>
+	</div>
+	
+	<div class="pure-g" id="server-list">
+		<noscript>
+		<div class="pure-u-1">
+			<div class="l-box info-container">
+				JavaScript is required to see the server list.
+			</div>
+		</div>
+		</noscript>
+	</div>
+	
+	<div id="advanced-filters-modal" class="modal hide fade" tabindex="-1" role="dialog"
+			aria-labelledby="advanced-filters-title" aria-hidden="true">
+		<div class="modal-header" id="advanced-filters-title">Advanced Filters</div>
+		<div class="modal-body" id="advanced-filters-list">
+			<!-- Looking at the source markup, huh?  Feature maybe coming soon!
+			
+			Possible features:  local regex matching for maps and server names, fine-tuned
+			playercounts
+			-->
+		</div>
+		<div class="modal-footer">
+		</div>
+	</div>
+	
+	<div id="connecting-modal" class="modal hide fade" tabindex="-1" role="dialog"
+			aria-labelledby="connecting-title" aria-hidden="true">
+		<div class="modal-header" id="connecting-title">Connecting to server...</div>
+		<div class="modal-body">
+			<p>
+				You're on your way to
+				<span id="connecting-destination">(some sort of server)</span>.
+			</p>
+			<p>Have fun!</p>
+		</div>
+	</div>
+	
+	<footer>
+		from /u/pikatf2 (among many other identities), made with farts, hands,
+		<a href="http://fontawesome.io/">font-awesome</a>,
+		<a href="http://purecss.io/">purecss</a>,
+		nginx,
+		<a href="https://github.com/chxanders/flup3">flup3</a>,
+		<a href="http://www.maxmind.com">geolite2</a>,
+		and waaaay too much spare time.
+		<a href="donate.html">gib muns?</a>
+	</footer>
+	
+	<!-- seriously, why the everloving FUCK does whitespace in between elements mess with layout -->
+	<!-- see: http://stackoverflow.com/a/5078297 -->
+	<template id="server-container-template">
+		<div class="l-box server-container"
+			><div class="pure-u-1-1 pure-u-md-3-8 server-name"></div
+			><div class="pure-u-1-1 pure-u-md-1-4 server-tags"></div
+			><div class="pure-u-1-2 pure-u-md-1-8 server-map"></div
+			><div class="pure-u-1-4 pure-u-md-1-8 server-players"></div
+			><div class="pure-u-1-4 pure-u-md-1-8 server-location"></div
+		></div>
+	</template>
+	
+	<!-- for those that like the comfy -->
+	<template id="server-container-cozy-template">
+		<div class="l-box server-container"
+			><div class="pure-u-3-4 server-map cozy"></div
+			><div class="pure-u-1-4">
+				<div class="server-players"></div>
+				<div class="server-location"></div>
+			</div
+			><div class="pure-u-3-4 server-name"></div
+			><div class="pure-u-1-4 server-tags"></div
+		></div>
+	</template>
+	
+	<script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/js/bootstrap.min.js"></script>
+	<script src="tags.js"></script>
+	<script src="js/strfmt.js"></script>
+	<script src="js/jquery.contextMenu.min.js"></script>
+	<script src="js/clipboard.min.js"></script>
+	<script src="js/storage_objects.js"></script>
+	
+	<script>
+	/* see: http://stackoverflow.com/a/6274381 */
+	/**
+	 * Shuffles array in place.
+	 * @param {Array} a items The array containing the items.
+	 */
+	function shuffle(a) {
+		var j, x, i;
+		for (i = a.length; i; i--) {
+			j = Math.floor(Math.random() * i);
+			x = a[i - 1];
+			a[i - 1] = a[j];
+			a[j] = x;
+		}
+	}
+	</script>
+	
+	<script>
+	/* see: http://stackoverflow.com/a/21623206 */
+	function distance(lat1, lon1, lat2, lon2) {
+		var p = 0.017453292519943295;    // Math.PI / 180
+		var c = Math.cos;
+		var a = 0.5 - c((lat2 - lat1) * p)/2 + 
+			  c(lat1 * p) * c(lat2 * p) * 
+			  (1 - c((lon2 - lon1) * p))/2;
+		return 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
+	}
+	
+	/* see: http://stackoverflow.com/a/36610696 */
+	function copyText(text){
+		function selectElementText(element) {
+			if (document.selection) {
+				var range = document.body.createTextRange();
+				range.moveToElementText(element);
+				range.select();
+			} else if (window.getSelection) {
+				var range = document.createRange();
+				range.selectNode(element);
+				window.getSelection().removeAllRanges();
+				window.getSelection().addRange(range);
+			}
+		}
+		var element = document.createElement('DIV');
+		element.textContent = text;
+		document.body.appendChild(element);
+		selectElementText(element);
+		document.execCommand('copy');
+		element.remove();
+	}
+	</script>
+	
+	<script>
+	/* client side stuff, try not to cry */
+	/* I'm thinking about redoing this all with riot.js so it isn't as big of a mess */
+	
+	var active_tags = {
+		"required": [],
+		"blacklisted": [],
+		"mapname": "",
+		"region": ""
+	};
+	
+	var is_cozy = window.location.hash == '#cozy';
+	
+	/* Updates server list based on filters. */
+	function updateServerFilters() {
+		active_tags.required = [];
+		active_tags.blacklisted = [];
+		
+		active_tags.mapname = $('#map-filter').val().toLowerCase();
+		active_tags.region = $('#region-filter').val();
+		
+		/* todo modify setup to use data attributes? */
+		$('.tag-toggle.off').each( function (index, tag_toggle) {
+			var tag = $(tag_toggle).attr('data-server-tag');
+			
+			if ($(tag_toggle).hasClass("filter-yeah")) {
+				active_tags.required.push(tag);
+			} else if ($(tag_toggle).hasClass("filter-nah")) {
+				active_tags.blacklisted.push(tag);
+			}
+		});
+		
+		localStorage.setObject('tag_prefs', active_tags);
+		
+		/* set visibility based on server's existing tags */
+		var server_entries = $('.server-entry');
+		
+		server_entries.each( function (index, node) {
+			updateServerVisibility(node);
+		});
+		
+		var num_visible = server_entries.filter(':visible').length;
+		var num_total = server_entries.length;
+		
+		$('#filter-count').text('{0} out of {1} servers displayed.'.format(num_visible, num_total));
+	}
+	
+	function updateServerVisibility(node) {
+		var server_data = $(node).data("server-data");
+		var server_tags = server_data.tags;
+		var map_name = server_data.map;
+			
+		var existing_tags = function (tag) {
+			return server_tags.indexOf(tag) >= 0;
+		}
+		
+		/* filter out server if any blacklisted tag shows up in server tags */
+		/* filter out server if not every tag required is in the server's tags */
+		var is_filtered = active_tags.blacklisted.some(existing_tags)
+				|| !active_tags.required.every(existing_tags);
+		
+		if (!is_filtered && active_tags.region.length > 0) {
+			if (active_tags.region !== server_data.geoip.region) {
+				is_filtered = true;
+			}
+		}
+		
+		if (!is_filtered && active_tags.mapname && active_tags.mapname.length > 0) {
+			var map_name_lower = map_name.toLowerCase();
+			
+			if (!map_name_lower.includes(active_tags.mapname)) {
+				is_filtered = true;
+			}
+		}
+		
+		/*
+		// very smooth, but also ridiculously expensive
+		var animate_params = is_filtered?
+				{ height: "hide", opacity: "hide" } :
+				{ height: "show", opacity: "show" };
+		
+		$(node).animate(animate_params);
+		*/
+		
+		is_filtered? $(node).hide() : $(node).show();
+	}
+	
+	function activateRandomPlay() {
+		/* TODO make a proper quickplay*/
+		
+		/* for now you get a random function */
+		var visible_servers = $('.server-entry').filter(':visible');
+		
+		if (visible_servers.length > 0) {
+			var selected_server = Math.floor(Math.random() * visible_servers.length);
+			visible_servers.eq(selected_server).trigger('dblclick');
+		}
+	}
+	
+	var local_location = {
+		"available": false,
+		"latitude": false,
+		"longitude": false,
+		get_raw_distance: function(other_lat, other_long) {
+			if (this.available) {
+				return distance(this.latitude, this.longitude, other_lat, other_long);
+			}
+			return 0;
+		},
+		get_estimated_distance: function(other_lat, other_long) {
+			return + this.get_raw_distance(other_lat, other_long).toPrecision(2);
+		},
+		get_estimated_distance_in_freedom_units: function(other_lat, other_long) {
+			return + (this.get_raw_distance(other_lat, other_long) * 0.621371).toPrecision(2);
+		},
+		get_estimated_latency: function(other_lat, other_long) {
+			/* based on a really basic real-world distance-latency linear fit */
+			return Math.floor((0.0151429 * this.get_raw_distance(other_lat, other_long)) + 42.1474);
+		}
+	};
+		
+	function createServerEntry(server) {
+		/* we still need to create the outer container element because fragments can't hold data */
+		var entry = $('<div>').addClass('server-entry');
+		
+		var template_id;
+		if (is_cozy) {
+			entry.addClass('pure-u-1-1 pure-u-md-1-2');
+			template_id = '#server-container-cozy-template';
+		} else {
+			entry.addClass('pure-u-1');
+			template_id = '#server-container-template';
+		}
+		
+		var template = document.querySelector(template_id).content;
+		var container = document.importNode(template, true);
+		
+		entry.data("server-data", server);
+		
+		$(container.querySelector(".server-name")).text(server.hostname)
+				.attr('title', server.hostname);
+		
+		var tags = $(container.querySelector(".server-tags"));
+		server.tags.forEach( function(tag) {
+			if (server_tags[tag]) {
+				var tag_entry = server_tags[tag];
+				var server_tag = $('<i>').addClass(tag_entry.tag_class);
+				server_tag.addClass('server-tag');
+				server_tag.attr('title', tag_entry.tooltip);
+				
+				tags.append(server_tag);
+			}
+		});
+		
+		container.querySelector(".server-map").textContent = server.map;
+		
+		var players = $(container.querySelector(".server-players"));
+		players.text(server.human_players + '/' + server.max_players);
+		players.text('{0}/{1}'.format(server.human_players, server.max_players));
+		if (server.bots > 0) {
+			players.text('{0} (+{1} bots)'.format(players.text(), server.bots));
+		}
+		
+		$(container.querySelector(".server-location")).attr('title', server.geoip.location);
+		
+		if (local_location.available) {
+			var lat_long = server.geoip.coords;
+			var dist = local_location.get_estimated_latency(lat_long[0], lat_long[1]);
+			
+			container.querySelector(".server-location").textContent =
+					'~{0} ms'.format(dist);
+			
+			entry.data("server-distance", dist);
+		} else {
+			container.querySelector(".server-location").textContent = server.geoip.location;
+		}
+		
+		$(entry).dblclick( function () {
+			var connect_info = $(this).data("server-data").connect;
+			
+			if (typeof connect_info !== "undefined") {
+				steamConnect(connect_info);
+				
+				var connect_hostname = $(this).data("server-data").hostname;
+				$('#connecting-destination').text(connect_hostname);
+				$('#connecting-modal').modal('show');
+				
+				setTimeout(function() {
+					$('#connecting-modal').modal('hide');
+				}, 5000);
+			}
+		});
+		
+		return entry.append(container);
+	}
+	
+	function steamConnect(info) {
+		window.location = 'steam://connect/' + info;
+	}
+	
+	$( document ).ready(function() {
+		/* creates filter mode toggle button */
+		var invert_filter_button = $('<a>').addClass('pure-button');
+		invert_filter_button.attr('id', "filter-mode-button");
+		invert_filter_button.append(
+				$('<i>').addClass('fa fa-times fa-fw').attr('id', 'filter-mode-icon')
+		);
+		invert_filter_button.attr('title', "Reset filters.");
+		$('#tag-toggles').append(invert_filter_button);
+		
+		/* do the thingy where clicking the reset button resets the things */
+		$('#filter-mode-button').click( function() {
+			$('.tf-button').removeClass("off filter-yeah filter-nah");
+			
+			$("#region-filter").val('');
+			$("#map-filter").val('');
+			
+			updateServerFilters();
+		});
+		
+		var filter_buttons = {};
+		
+		/* create toggles for tags */
+		Object.keys(server_tags).forEach( function (tag) {
+			console.log('{0}: {1}'.format(tag, server_tags[tag].hidden));
+			if (typeof(server_tags[tag].hidden) !== "undefined" && server_tags[tag].hidden) {
+				delete server_tags[tag];
+			} else {
+				var toggle_button = $('<a>').addClass('pure-button tf-button tag-toggle');
+				toggle_button.append( $('<i>').addClass(server_tags[tag].tag_class).addClass('fa-fw') );
+				toggle_button.attr('title', server_tags[tag].tooltip);
+				toggle_button.attr('data-server-tag', tag);
+				
+				filter_buttons[tag] = toggle_button;
+				
+				$('#tag-toggles').append(toggle_button);
+			}
+		});
+		
+		$('.tf-button').click( function() {
+			if ($(this).hasClass("filter-yeah")) {
+				$(this).removeClass("filter-yeah").addClass("filter-nah");
+			} else if ($(this).hasClass("filter-nah")) {
+				$(this).removeClass("off filter-nah");
+			} else {
+				$(this).addClass("off filter-yeah");
+			}
+			updateServerFilters();
+		});
+		
+		/* create quickplay button */
+		var randomplay_button = $('<a>').addClass('pure-button play-button');
+		randomplay_button.append( $('<i>').addClass('fa fa-random fa-fw') );
+		randomplay_button.attr('title', "Pick a random server based on the current active filters.");
+		randomplay_button.click( activateRandomPlay );
+		$('#filter-toolbar').append(randomplay_button);
+		
+		/* TODO do local storage -- if a filter set is saved then load and test */
+		if (typeof(Storage) !== "undefined") {
+			var tag_prefs = localStorage.getObject('tag_prefs');
+			
+			if (tag_prefs) {
+				active_tags = tag_prefs;
+				
+				$("#region-filter").val(active_tags.region);
+				$("#map-filter").val(active_tags.mapname);
+			}
+			
+			active_tags.required.forEach(function(tag) {
+				filter_buttons[tag].addClass("off filter-yeah");
+			});
+			
+			active_tags.blacklisted.forEach(function (tag) {
+				filter_buttons[tag].addClass("off filter-nah");
+			});
+		}
+		
+		/* get server list */
+		$.getJSON("get_servers", function (query) {
+			shuffle(query.ids);
+			
+			query.ids.forEach( function (id) {
+				var data = { "serverid": id };
+				$.getJSON("server", data, function(query) {
+					if (query.success && query.eligible) {
+						var entry = createServerEntry(query.server);
+						$('#server-list').append(entry);
+						
+						updateServerVisibility(entry);
+						
+						$('#filter-count').text('{0} servers loaded.'.format($('.server-entry').length));
+					}
+				});
+			});
+		});
+		
+		$('#server-list').contextMenu({
+			selector: '.server-entry',
+			callback: function(key, options) {
+				var server_data = $(this).data("server-data");
+				
+				switch (key) {
+					case "clippy":
+						copyText(server_data.connect);
+						break;
+					case "clippy-steam":
+						copyText('steam://connect/' + server_data.connect);
+						break;
+					case "clippy-console":
+						copyText('connect ' + server_data.connect);
+						break;
+					case "clippy-console-mm":
+						copyText('connect ' + server_data.connect + ' matchmaking');
+						break;
+					case "connect":
+						$(this).trigger('dblclick');
+						break;
+				}
+			},
+			items: {
+				"connect": {name: "Connect to server"},
+				/*"copy": {
+					name: "Copy IP address...",
+					items: {
+						"clippy": {name: "... by itself"},
+						"clippy-steam": {name: "... as a Steam protocol link"},
+						"clippy-console": {name: "... as a console connection"},
+						"clippy-console-mm": {name: "... as a console connection (quickplay mode)"}
+					}
+				},*/
+				"clippy": {name: "Copy IP address..."},
+				"refresh": {name: "Refresh server info (unimplemented)"}
+			}
+		});
+		
+		$("#map-filter").on('input propertychange paste', function() {
+			updateServerFilters();
+		});
+		
+		$('#region-filter').change(function() {
+			updateServerFilters();
+		});
+		
+		/** 
+		 * try to get geolocation for distance
+		 * 
+		 * don't worry, I won't send it to the server, it'd just be a waste of bandwidth and
+		 * processing time
+		 */
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition( function(position) {
+				local_location.latitude = position.coords.latitude;
+				local_location.longitude = position.coords.longitude;
+				local_location.available = true;
+				
+				$('.server-entry').each( function (index, node) {
+					var lat_long = $(node).data("server-data").geoip.coords;
+					
+					var dist = local_location.get_estimated_latency(lat_long[0], lat_long[1]);
+					
+					node.querySelector(".server-location").textContent =
+							'~{0} ms'.format(dist);
+					$(node).data("server-distance", dist);
+				});
+			});
+		}
+	});
+	</script>
+</body>
+
+</html>
