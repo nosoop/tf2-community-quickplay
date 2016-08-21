@@ -1,4 +1,5 @@
 import geoip2.database, socket
+from CommunityQuickplay.Config import Config
 
 def valid_ipaddr(addr):
 	try:
@@ -21,7 +22,7 @@ class GeoIPReader:
 	Creates a shared GeoIP2 Reader instance.
 	'''
 	
-	reader = geoip2.database.Reader('/srv/quickplay.www/db/GeoLite2-City.mmdb')
+	reader = geoip2.database.Reader(Config()['databases']['geoip2'])
 	
 	def __init__(self):
 		pass

@@ -16,7 +16,7 @@ from flup.server.fcgi import WSGIServer
 
 from cgi import escape
 
-import json, urllib, time
+import json, urllib, time, queue, threading
 # import database_funcs
 
 from CommunityQuickplay.Database import Database
@@ -64,6 +64,68 @@ def app(environ, start_response):
 			response = GameServerInfo(host, port, extdata=extdata).get()
 		
 		yield json.dumps(response, indent = 4)
+	elif script == '/server_list':
+		start_response('200 OK', [('Content-Type', 'text/json'), ('Cache-Control', 'max-age=60')])
+
+		limit = 50
+		offset = 0
+		extdata = True if 'extdata' in query else False
+		response = { 'success': False, 'servers': [] }
+
+		if 'limit' in query:
+			limit = query['limit'][0]
+		if 'offset' in query:
+			offset = query['offset'][0]
+
+		db = Database()
+
+		# Here, we get an array of IP:Port tuples.
+		server_list = db.get_ip_port_server_list(offset, limit)
+
+		threads = Config()['query_threads']
+
+		query_q = queue.Queue()
+		result_q = queue.Queue()
+
+		# This is the function that will be the worker threads
+		def query_thread(i, q):
+			while True: # Loop until forever (until killed)
+				job = None
+				try:
+					job = q.get(timeout=3) # Get some work from the queue
+				except queue.Empty: # Make sure threads exit if no work is left.
+					break
+				server_info = GameServerInfo(*job, extdata=extdata).get()
+				result_q.put(server_info)
+				q.task_done()
+
+		# Launch our worker therads.
+		for i in range(threads):
+			q_thread = threading.Thread(target=query_thread, args=(i, query_q))
+			q_thread.setDaemon(True)
+			q_thread.start()
+
+		# Place all servers in the query queue
+		for server in server_list:
+			query_q.put(server)
+
+		# Wait for all therads to finish
+		query_q.join()
+
+		# Fetch everything from the result queue and make a pretty list
+		while True:
+			try:
+				s = result_q.get_nowait()
+				response['servers'].append(s)
+			except queue.Empty:
+				break
+		
+		#response['servers'] = server_list
+		response['count'] = len(server_list)
+		response['success'] = True
+
+		yield json.dumps(response, indent = 4)
+
 	elif script == '/get_servers':
 		start_response('200 OK', [('Content-Type', 'text/json'), ('Cache-Control', 'max-age=10')])
 		
@@ -82,4 +144,5 @@ def app(environ, start_response):
 socket = Config()['socket']
 
 print('Created FastCGI socket at {}'.format(socket))
-WSGIServer(app, bindAddress=socket, umask=0o011).run()
+#WSGIServer(app, bindAddress=socket, umask=0o011).run()
+WSGIServer(app, bindAddress=('0.0.0.0', 9000), umask=0o011).run()

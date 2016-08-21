@@ -1,7 +1,9 @@
 {
 	"socket": "/tmp/quickplay.sock",
-	
+	"query_threads": 10,
+
 	"databases": {
+		"sqlite": "../db/tf2.db",
 		"geoip2": "../db/GeoLite2-City.mmdb"
 	},
 	
