@@ -642,8 +642,34 @@
 		}
 		
 		/* get server list */
-		$.getJSON("get_servers", function (query) {
-			shuffle(query.ids);
+		var batch_data = { "limit": 50, "offset": 0 };
+		var returned_count = 0;
+		function server_list_loop()
+		{
+			$.getJSON("server_list", batch_data, function(query) {
+				returned_count = query.count;
+				query.servers.forEach( function(server) {
+					if (server.success && server.eligible) {
+						var entry = createServerEntry(server.server);
+						$('#server-list').append(entry);
+
+						updateServerVisibility(entry);
+
+						$('#filter-count').text('{0} servers loaded.'.format($('.server-entry').length));
+					}
+				});
+				
+				if ( returned_count >= batch_data["limit"] )
+				{
+					batch_data["offset"] += batch_data["limit"];
+					server_list_loop();
+				}
+			});
+		}
+		server_list_loop();
+		/* $.getJSON("server_list", function (query) {
+
+
 			
 			query.ids.forEach( function (id) {
 				var data = { "serverid": id };
@@ -658,7 +684,7 @@
 					}
 				});
 			});
-		});
+		}); */
 		
 		$('#server-list').contextMenu({
 			selector: '.server-entry',

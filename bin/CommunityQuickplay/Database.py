@@ -1,11 +1,12 @@
 import sqlite3, time
+from CommunityQuickplay.Config import Config
 
 SERVER_UPDATE_OLDEST = 60 * 60 * 8
 
 class Database:
 	def __init__(self):
 		# self.connection = sqlite3.connect('/srv/quickplay.www/db/database_production.sq3')
-		self.connection = sqlite3.connect('file:/srv/quickplay.www/db/database_production.sq3?cache=shared', uri=True)
+		self.connection = sqlite3.connect(Config()['databases']['sqlite'], uri=True)
 		self.connection.row_factory = sqlite3.Row
 		self.cursor = self.connection.cursor()
 	
@@ -40,6 +41,18 @@ class Database:
 				break
 			
 			yield row['serverid']
+
+	def get_ip_port_server_list(self, offset=0, limit=50, access_time=-1):
+		if access_time == -1:
+			access_time = int(time.time())
+		oldest_entry_time = access_time - SERVER_UPDATE_OLDEST
+
+		self.cursor.execute(
+			'SELECT ipaddr, port FROM servers WHERE master_update >= ? ORDER BY serverid LIMIT ? OFFSET ?',
+			(oldest_entry_time, limit, offset)
+		)
+
+		return self.cursor.fetchall()
 	
 	def get_server_info_by_id(self, serverid):
 		pass
