@@ -144,5 +144,4 @@ def app(environ, start_response):
 socket = Config()['socket']
 
 print('Created FastCGI socket at {}'.format(socket))
-#WSGIServer(app, bindAddress=socket, umask=0o011).run()
-WSGIServer(app, bindAddress=('0.0.0.0', 9000), umask=0o011).run()
+WSGIServer(app, bindAddress=socket, umask=0o011).run()
